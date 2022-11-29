@@ -501,7 +501,7 @@ if __name__ == '__main__':
   parser.add_argument('firmware',
                       nargs='+',
                       help="""EC618 firmware files:
-  agentboot.bin ap_bootloader.bin ap_flash.bin
+  agentboot.bin ap_bootloader.bin ap_flash.bin cp_flash.bin
   """)
   parser.add_argument(
       '-v',
