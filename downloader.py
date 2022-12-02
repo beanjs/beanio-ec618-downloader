@@ -95,7 +95,7 @@ class Flasher:
           data = data[size:]
 
         self.s.write(chunk)
-        sleep(0.001)
+        sleep(0.0001)
 
   def port_send_and_read(self,read_size,data):
     self.port_send(data)
