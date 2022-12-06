@@ -1,10 +1,11 @@
-__VERSION__ = "1.0.0"
+__VERSION__ = "1.0.1"
 __AUTHOR__ = "beanjs"
 __EMAIL__ = "502554248@qq.com"
 
 import signal
 from time import *
 from struct import *
+from sys import *
 from argparse import ArgumentParser,ArgumentDefaultsHelpFormatter,RawTextHelpFormatter
 from serial.tools import list_ports
 from os.path import getsize
@@ -27,8 +28,12 @@ def ASSERT(flag, message):
     ERROR(message)
 
 def TOHEX(s):
-    return hexlify(s).decode("ascii").upper()
+  return hexlify(s).decode("ascii").upper()
 
+def PRINT(s):
+  print(s)
+  stdout.flush()
+  stderr.flush()
 
 class Flasher:
   def __init__(self):
@@ -36,19 +41,22 @@ class Flasher:
     pass
 
   def port_search(self, timeout=15):
-    print("search port")
+    PRINT("search port")
     start_time = time()
     
     while True:
       ports = list_ports.grep("17D1:0001")
       for port in ports:
-        print("found port {0}".format(port.description))
+        PRINT("found port {0}".format(port.description))
+        stdout.flush()
+        stderr.flush()
         self.port = port.device
         return True
       
       if time() - start_time > timeout:
         return False
       sleep(1)
+    
 
   def port_open(self):
     try:
@@ -448,12 +456,15 @@ class Flasher:
     self.file_agentboot, self.file_ap_bootloader, self.file_ap_flash, self.file_cp_flash = self.firmware
 
     ASSERT(self.port_search(), 'unable to find device.')
+    PRINT("wait for change device permission(10s)")
+    sleep(10)
+    
     ASSERT(self.port_open(),'can`t open device.')
     
-    print('download {0}'.format(self.file_agentboot))
+    PRINT('download {0}'.format(self.file_agentboot))
     self.dl_agentboot()
     
-    print('download {0}'.format(self.file_ap_bootloader))
+    PRINT('download {0}'.format(self.file_ap_bootloader))
     self.port_send_and_read(0,self.package(0xCDD3022B))
     ack, = unpack('>I',self.port_send_and_read(4,self.package(0xCDD3022B)))
     ASSERT(ack == 0xCDD3022B,'{0} echo error: 0xCDD3022B'.format(self.file_ap_bootloader))
@@ -462,7 +473,7 @@ class Flasher:
     ASSERT(ack == 0x42004CB3,'{0} echo error: 0xCDD3022B'.format(self.file_ap_bootloader))
     self.dl_file(self.file_ap_bootloader,0xEE000000,0x00000000,0x494D424F,0x00000000)
 
-    print('download {0}'.format(self.file_ap_flash))
+    PRINT('download {0}'.format(self.file_ap_flash))
     self.port_send_and_read(0,self.package(0xCDD3022B))
     ack, = unpack('>I',self.port_send_and_read(4,self.package(0xCDD3022B)))
     ASSERT(ack == 0xCDD3022B,'{0} echo error: 0xCDD3022B'.format(self.file_ap_flash))
@@ -471,7 +482,7 @@ class Flasher:
     ASSERT(ack == 0x42004CB3,'{0} echo error: 0xCDD3022B'.format(self.file_ap_flash))
     self.dl_file(self.file_ap_flash,0xEE000000,0x04000000,0x49424B44,0x00400200)
 
-    print('download {0}'.format(self.file_cp_flash))
+    PRINT('download {0}'.format(self.file_cp_flash))
     self.port_send_and_read(0,self.package(0xCDD3022B))
     ack, = unpack('>I',self.port_send_and_read(4,self.package(0xCDD3022B)))
     ASSERT(ack == 0xCDD3022B,'{0} echo error: 0xCDD3022B'.format(self.file_cp_flash))
@@ -481,14 +492,14 @@ class Flasher:
     self.dl_file(self.file_cp_flash,0xEE000000,0x00000000,0x49425043,0x00000000)
 
     self.port_close()
-    print('all done!!')
+    PRINT('all done!!')
 
 flasher = Flasher()
 
 if __name__ == '__main__':
 
   def signal_handler(sig, frame):
-    print('operation has been stopped!')
+    PRINT('operation has been stopped!')
     flasher.port_close()
     exit(1)
 
