@@ -1,11 +1,12 @@
-__VERSION__ = "1.0.2"
+__VERSION__ = "1.0.3"
 __AUTHOR__ = "beanjs"
 __EMAIL__ = "502554248@qq.com"
 
 import signal
+import platform
 from time import *
 from struct import *
-from sys import *
+from sys import stderr,stdout
 from argparse import ArgumentParser,ArgumentDefaultsHelpFormatter,RawTextHelpFormatter
 from serial.tools import list_ports
 from os.path import getsize
@@ -86,22 +87,26 @@ class Flasher:
     # print("-->({0}) {1}".format(len(data),TOHEX(data)))
     if len(data) > 0:
       # self.s.write(data)
-      while True:
-        smax = 64
-        size = len(data)
-        chunk = bytes()
-
-        if size == 0:
-          break
-        elif smax < size:
-          chunk = data[0:smax]
-          data = data[smax:]
-        else:
-          chunk = data[0:size]
-          data = data[size:]
-
-        self.s.write(chunk)
+      if platform.system().lower() == 'windows':
+        self.s.write(data)
         sleep(0.001)
+      else:
+        while True:
+          smax = 64
+          size = len(data)
+          chunk = bytes()
+
+          if size == 0:
+            break
+          elif smax < size:
+            chunk = data[0:smax]
+            data = data[smax:]
+          else:
+            chunk = data[0:size]
+            data = data[size:]
+
+          self.s.write(chunk)
+          sleep(0.001)
 
   def port_send_and_read(self,read_size,data):
     self.port_send(data)
@@ -455,7 +460,7 @@ class Flasher:
 
     ASSERT(self.port_search(), 'unable to find device.')
 
-    if platform == 'linux':
+    if platform.system().lower() == 'linux':
       PRINT('wait for change device permission(5s)')
       sleep(5)
     
