@@ -1,4 +1,4 @@
-__VERSION__ = "1.0.1"
+__VERSION__ = "1.0.2"
 __AUTHOR__ = "beanjs"
 __EMAIL__ = "502554248@qq.com"
 
@@ -48,8 +48,6 @@ class Flasher:
       ports = list_ports.grep("17D1:0001")
       for port in ports:
         PRINT("found port {0}".format(port.description))
-        stdout.flush()
-        stderr.flush()
         self.port = port.device
         return True
       
@@ -456,8 +454,10 @@ class Flasher:
     self.file_agentboot, self.file_ap_bootloader, self.file_ap_flash, self.file_cp_flash = self.firmware
 
     ASSERT(self.port_search(), 'unable to find device.')
-    PRINT("wait for change device permission(10s)")
-    sleep(10)
+
+    if platform == 'linux':
+      PRINT('wait for change device permission(5s)')
+      sleep(5)
     
     ASSERT(self.port_open(),'can`t open device.')
     
